@@ -113,8 +113,8 @@ def get_signatures_for_func(func_value, func_name, locale, is_overload: bool = F
     sig = inspect.signature(func_value)
     try:
         hints = get_type_hints(func_value)
-    except Exception as e:
-        raise TypeError(f"Can't parse {func_name}{sig}.") from e
+    except Exception:
+        hints = {}
     ret_annot_module = getattr(sig.return_annotation, "__module__", None)
     if sig.return_annotation not in [
         None,
@@ -156,10 +156,12 @@ def get_signatures_for_func(func_value, func_name, locale, is_overload: bool = F
     decorator = ""
     if is_overload:
         decorator += "@overload\n"
-    if list(sig.parameters)[0] == "cls":
+    params = list(sig.parameters)
+    if params and params[0] == "cls":
         decorator += "@classmethod\n"
-    elif list(sig.parameters)[0] != "self":
+    elif params and params[0] != "self":
         decorator += "@staticmethod\n"
+
     signatures.append(
         (
             f"{decorator}def {func_name}{sig_str}: ...",
